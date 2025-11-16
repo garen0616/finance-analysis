@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+  <h2>Select Quarter</h2>
+  <p>
+    Target symbol: <strong>{{ symbol }}</strong>
+    {% if source == "transcript" %}
+    <span class="tag">Source: Transcript Dates</span>
+    {% else %}
+    <span class="tag">Source: Earnings</span>
+    {% endif %}
+  </p>
+  <form action="/analyze" method="get">
+    <input type="hidden" name="symbol" value="{{ symbol }}" />
+    <input type="hidden" name="lang" value="{{ lang }}" />
+    <label class="label" for="yq">Fiscal quarter</label>
+    <select class="input" id="yq" name="yq">
+      {% for opt in options %}
+      <option value="{{ opt.year }}-{{ opt.quarter }}" {% if loop.first %}selected{% endif %}>
+        {{ opt.year }} Q{{ opt.quarter }}{% if opt.date %}（{{ opt.date }}）{% endif %}
+      </option>
+      {% endfor %}
+    </select>
+    <p class="muted" style="margin-top: 8px;">
+      The latest quarter is preselected; you can choose a different one from the dropdown.
+    </p>
+    <div style="margin-top: 12px;">
+      <label style="margin-right: 12px;">
+        <input type="checkbox" name="save" value="1" checked />
+        Generate Markdown report
+      </label>
+      <label>
+        <input type="checkbox" name="plot" value="1" checked />
+        Generate event study chart
+      </label>
+    </div>
+    <div style="margin-top: 14px;">
+      <button class="btn btn-primary" type="submit">Run analysis</button>
+      <a class="btn btn-secondary" href="/search?q={{ symbol }}&lang={{ lang }}">Choose another symbol</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

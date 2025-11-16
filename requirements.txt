@@ -1,0 +1,10 @@
+typer[all]
+rich
+pandas
+requests
+python-dateutil
+matplotlib
+fastapi
+uvicorn[standard]
+jinja2
+reportlab

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+  <h2>Search US Stocks</h2>
+  <p class="muted">
+    Enter company name or ticker (e.g., AAPL, MSFT, NVIDIA). The app will use FMP Name Search to list the top 10 matches.
+  </p>
+  <form action="/search" method="get">
+    <label class="label" for="q">Keyword (name or ticker)</label>
+    <input class="input" id="q" name="q" type="text" required />
+    <div style="margin-top: 10px; max-width: 320px;">
+      <label class="label" for="lang">Output language</label>
+      <select class="input" id="lang" name="lang">
+        {% for code, label in lang_choices.items() %}
+        <option value="{{ code }}" {% if code == lang %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <p class="muted" style="margin-top: 4px;">
+        Default is English. You can switch to Traditional Chinese, Japanese, or German.
+      </p>
+    </div>
+    <div style="margin-top: 10px;">
+      <button class="btn btn-primary" type="submit">Search</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

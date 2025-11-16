@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+  <h2>Search Results</h2>
+  <p class="muted">Keyword: "{{ query }}"</p>
+  {% if not results %}
+  <p class="error">No matching symbols found. Please go back and try another keyword.</p>
+  <a class="btn btn-secondary" href="/?lang={{ lang }}">Back to Search</a>
+  {% else %}
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Symbol</th>
+        <th>Name</th>
+        <th>Exchange</th>
+        <th></th>
+      </tr>
+    </thead>
+      <tbody>
+      {% for row in results %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ row.symbol }}</td>
+        <td>{{ row.name }}</td>
+        <td>{{ row.exchange }}</td>
+        <td>
+          <a class="btn btn-primary" href="/quarter?symbol={{ row.symbol }}&lang={{ lang }}">Select</a>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+  </table>
+  <div style="margin-top: 12px;">
+    <a class="btn btn-secondary" href="/?lang={{ lang }}">Search again</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

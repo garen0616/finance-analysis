@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+  <h2>
+    Analysis: {{ analysis.company.name if analysis.company else analysis.symbol }}
+    ({{ analysis.symbol }}) {{ analysis.year }} Q{{ analysis.quarter }}
+  </h2>
+  {% if analysis.company %}
+  <p class="muted">
+    Exchange: {{ analysis.company.exchange }} |
+    Sector / Industry: {{ analysis.company.sector }} / {{ analysis.company.industry }} |
+    Market Cap: {{ format_currency_compact(analysis.company.market_cap) if analysis.company.market_cap else "N/A" }} |
+    Fiscal Year End: {{ analysis.company.fiscal_year_end or "N/A" }}
+  </p>
+  {% endif %}
+  {% if report_path %}
+  <p class="muted">
+    Markdown report saved on server:
+    <code>{{ report_path }}</code>
+  </p>
+  {% endif %}
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Quarterly financial highlights</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>項目</th>
+          <th>This quarter</th>
+          <th>YoY</th>
+          <th>QoQ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set inc = analysis.income_current %}
+        {% set inc_y = analysis.income_yoy %}
+        {% set inc_q = analysis.income_qoq %}
+        {% for label, key in [("Revenue", "revenue"), ("Gross Profit", "gross_profit"), ("Operating Income", "operating_income"), ("Net Income", "net_income")] %}
+        <tr>
+          <td>{{ label }}</td>
+          <td>{{ format_currency(inc[key]) }}</td>
+          <td>{{ format_pct(compute_growth(inc[key], inc_y.get(key))) if inc_y else "N/A" }}</td>
+          <td>{{ format_pct(compute_growth(inc[key], inc_q.get(key))) if inc_q else "N/A" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Cash flow & FCF</h2>
+    {% set cf = analysis.cf_current %}
+    {% set cf_y = analysis.cf_yoy %}
+    <table>
+      <thead>
+        <tr>
+          <th>項目</th>
+          <th>This quarter</th>
+          <th>YoY</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>CFO</td>
+          <td>{{ format_currency(cf.cfo) }}</td>
+          <td>{{ format_pct(compute_growth(cf.cfo, cf_y.get("cfo"))) if cf_y else "N/A" }}</td>
+        </tr>
+        <tr>
+          <td>CAPEX</td>
+          <td>{{ format_currency(cf.capex) }}</td>
+          <td>{{ format_pct(compute_growth(cf.capex, cf_y.get("capex"))) if cf_y else "N/A" }}</td>
+        </tr>
+        <tr>
+          <td>FCF</td>
+          <td>{{ format_currency(cf.fcf) }}</td>
+          <td>{{ format_pct(compute_growth(cf.fcf, cf_y.get("fcf"))) if cf_y else "N/A" }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Balance sheet (last 4 quarters)</h2>
+  {% if analysis.balance_trend %}
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        {% for label in analysis.balance_trend.labels %}
+        <th>{{ label }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in analysis.balance_trend.rows %}
+      <tr>
+        <td>{{ row.label }}</td>
+        {% for v in row.values %}
+        <td>{{ format_currency(v) }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">Unable to retrieve recent balance sheet highlights.</p>
+  {% endif %}
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>EPS & revenue surprise</h2>
+    {% set e = analysis.earnings %}
+    {% if e.announcement_date %}
+    <p>Announcement date (UTC): {{ e.announcement_date.strftime("%Y-%m-%d") }}</p>
+    {% endif %}
+    {% if e.time_of_day %}
+    <p>Time of day: {{ e.time_of_day }}</p>
+    {% endif %}
+    <p>
+      <strong>EPS</strong><br />
+      Actual: {{ e.eps_actual }} |
+      Estimate: {{ e.eps_estimate }} |
+      Surprise: {{ e.eps_surprise }} |
+      Surprise%: {{ format_pct(e.eps_surprise_pct) }}
+    </p>
+    <p>
+      <strong>Revenue</strong><br />
+      Actual: {{ format_currency(e.revenue_actual) }} |
+      Estimate: {{ format_currency(e.revenue_estimate) }} |
+      Surprise%: {{ format_pct(e.revenue_surprise_pct) }}
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Price event study</h2>
+    {% set ev = analysis.event %}
+    {% if ev.baseline_date and ev.baseline_price %}
+    <p>
+      Baseline date (close): {{ ev.baseline_date.strftime("%Y-%m-%d") }}<br />
+      Baseline price: {{ "%.2f"|format(ev.baseline_price) }}<br />
+      {% if ev.event_date %}Event date: {{ ev.event_date.strftime("%Y-%m-%d") }}{% endif %}
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>視窗</th>
+          <th>Cumulative return</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for label in ["T+1", "T+3", "T+7"] %}
+        <tr>
+          <td>{{ label }}</td>
+          <td>{{ format_pct(ev.returns.get(label)) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if plot_url %}
+    <p class="muted" style="margin-top: 10px;">Event window chart:</p>
+    <img src="{{ plot_url }}" alt="Event study chart" style="max-width: 100%; border-radius: 4px;" />
+    {% endif %}
+    {% else %}
+    <p class="muted">Event study is not available (missing prices or earnings date).</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>Transcript highlights</h2>
+  <pre style="white-space: pre-wrap; font-size: 0.9rem;">{{ analysis.transcript_summary }}</pre>
+  <div style="margin-top: 10px;">
+    <a class="btn btn-secondary" href="/download/pdf?symbol={{ analysis.symbol }}&yq={{ analysis.year }}-{{ analysis.quarter }}&lang={{ lang }}">Download as PDF</a>
+  </div>
+</div>
+
+{% endblock %}
