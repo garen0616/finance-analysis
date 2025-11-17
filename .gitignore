@@ -1,5 +1,12 @@
-.venv/
-__pycache__/
+node_modules/
+frontend/.next/
+backend/.venv/
+.env
+backend/.env
+backend/storage/
+backend/external/EarningsCallAgenticRag/
+**/__pycache__/
 *.pyc
-reports/
-
+*.sqlite
+*.log
+.DS_Store
