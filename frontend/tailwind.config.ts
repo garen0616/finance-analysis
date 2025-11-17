@@ -25,8 +25,11 @@ const config: Config = {
       },
       keyframes: {
         "grid-move": { "0%": { transform: "translateY(0)" }, "100%": { transform: "translateY(-8px)" } },
-        fade: { "0%": { opacity: 0 }, "100%": { opacity: 1 } },
-        slide: { "0%": { opacity: 0, transform: "translateY(6px)" }, "100%": { opacity: 1, transform: "translateY(0)" } },
+        fade: { "0%": { opacity: "0" }, "100%": { opacity: "1" } },
+        slide: {
+          "0%": { opacity: "0", transform: "translateY(6px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "grid-move": "grid-move 14s ease-in-out infinite alternate",
