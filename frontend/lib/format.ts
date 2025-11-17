@@ -8,6 +8,7 @@ export function useFormat() {
     const sign = x > 0 ? "+" : "";
     return `${sign}${formatNumber(x / 100, "percent")}`;
   };
-  const formatDate = (iso: string) => new Intl.DateFormat(locale, { year: "numeric", month: "2-digit", day: "2-digit" } as any).format(new Date(iso));
+  const formatDate = (iso: string) =>
+    new Intl.DateTimeFormat(locale, { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
   return { formatNumber, formatSignedPercent, formatDate };
 }
