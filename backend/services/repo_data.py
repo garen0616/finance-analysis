@@ -1,7 +1,7 @@
-import os
+import csv
 import glob
-import pandas as pd
-from typing import List, Dict, Optional
+import os
+from typing import Dict, List, Optional
 from dateutil import parser
 
 DATA_ROOT = os.environ.get("DATA_ROOT", "backend/external/EarningsCallAgenticRag")
@@ -13,11 +13,16 @@ TICKER_COLS = ["symbol", "ticker"]
 YEAR_COLS = ["fiscal_year", "fiscalYear", "year"]
 QTR_COLS = ["fiscal_quarter", "fiscalQuarter", "quarter", "fiscalPeriod"]
 
+
+def _lower_map(headers: List[str]) -> Dict[str, str]:
+    return {h.lower(): h for h in headers}
+
+
 class RepoDataLoader:
     def __init__(self, root: str = DATA_ROOT):
         self.root = root
 
-    def _datasets(self):
+    def _datasets(self) -> List[str]:
         ds = []
         for fn in TRANSCRIPT_FILES:
             path = os.path.join(self.root, fn)
@@ -26,26 +31,7 @@ class RepoDataLoader:
         return ds
 
     def list_datasets(self) -> List[Dict]:
-        out = []
-        for path in self._datasets():
-            out.append({"name": os.path.basename(path), "path": path, "size": os.path.getsize(path)})
-        return out
-
-    def _read(self, path: str) -> pd.DataFrame:
-        if path.endswith(".parquet"):
-            return pd.read_parquet(path)
-        return pd.read_csv(path)
-
-    def _find_col(self, df: pd.DataFrame, candidates: List[str]) -> Optional[str]:
-        for c in candidates:
-            if c in df.columns:
-                return c
-        for c in candidates:
-            low = c.lower()
-            for col in df.columns:
-                if col.lower() == low:
-                    return col
-        return None
+        return [{"name": os.path.basename(p), "path": p, "size": os.path.getsize(p)} for p in self._datasets()]
 
     def _get_dataset_path(self, dataset: str) -> str:
         if os.path.isabs(dataset):
@@ -55,102 +41,146 @@ class RepoDataLoader:
                 return path
         raise FileNotFoundError(f"dataset not found: {dataset}")
 
+    def _read_rows(self, path: str) -> List[Dict]:
+        rows: List[Dict] = []
+        try:
+            with open(path, newline="", encoding="utf-8-sig") as f:
+                reader = csv.DictReader(f)
+                for r in reader:
+                    rows.append({k: v for k, v in r.items()})
+        except FileNotFoundError:
+            return []
+        return rows
+
+    def _find_col(self, headers: List[str], candidates: List[str]) -> Optional[str]:
+        lower_map = _lower_map(headers)
+        for c in candidates:
+            if c in headers:
+                return c
+            lc = c.lower()
+            if lc in lower_map:
+                return lower_map[lc]
+        return None
+
+    def _parse_int(self, value) -> Optional[int]:
+        if value is None:
+            return None
+        try:
+            s = str(value).strip()
+            if not s:
+                return None
+            s = s.replace("Q", "").replace("q", "")
+            return int(float(s))
+        except Exception:
+            return None
+
+    def _parse_date(self, value) -> Optional[str]:
+        if value is None:
+            return None
+        try:
+            return parser.parse(str(value)).date().isoformat()
+        except Exception:
+            return None
+
     def list_tickers(self, dataset: str) -> List[Dict]:
         path = self._get_dataset_path(dataset)
-        df = self._read(path)
-        tcol = self._find_col(df, TICKER_COLS)
+        rows = self._read_rows(path)
+        if not rows:
+            return []
+        headers = list(rows[0].keys())
+        tcol = self._find_col(headers, TICKER_COLS)
         if not tcol:
             return []
-        counts = df[tcol].value_counts().to_dict()
-        return [{"symbol": k, "count": int(v)} for k, v in counts.items()]
+        counts: Dict[str, int] = {}
+        for r in rows:
+            sym = (r.get(tcol) or "").upper()
+            if not sym:
+                continue
+            counts[sym] = counts.get(sym, 0) + 1
+        return [{"symbol": k, "count": v} for k, v in counts.items()]
 
     def list_periods(self, dataset: str, symbol: str) -> List[Dict]:
         path = self._get_dataset_path(dataset)
-        df = self._read(path)
-        tcol = self._find_col(df, TICKER_COLS)
-        if not tcol:
+        rows = self._read_rows(path)
+        if not rows:
             return []
-        df = df[df[tcol].str.upper() == symbol.upper()]
-        ycol = self._find_col(df, YEAR_COLS)
-        qcol = self._find_col(df, QTR_COLS)
-        dcol = self._find_col(df, DATE_COLS)
-        periods = []
-        for _, row in df.iterrows():
-            fy = int(row[ycol]) if ycol in row and not pd.isna(row[ycol]) else None
-            fq = None
-            if qcol in row and not pd.isna(row[qcol]):
-                try:
-                    fq = int(str(row[qcol]).replace("Q", "").replace("q", ""))
-                except Exception:
-                    fq = None
-            dt = None
-            if dcol in row and not pd.isna(row[dcol]):
-                try:
-                    dt = parser.parse(str(row[dcol])).date().isoformat()
-                except Exception:
-                    dt = None
-            periods.append({"fiscalYear": fy, "fiscalQuarter": fq, "periodEnd": dt})
-        return periods
+        headers = list(rows[0].keys())
+        tcol = self._find_col(headers, TICKER_COLS)
+        ycol = self._find_col(headers, YEAR_COLS)
+        qcol = self._find_col(headers, QTR_COLS)
+        dcol = self._find_col(headers, DATE_COLS)
+        out = []
+        for r in rows:
+            sym = (r.get(tcol) or "").upper() if tcol else ""
+            if sym != symbol.upper():
+                continue
+            fy = self._parse_int(r.get(ycol)) if ycol else None
+            fq = self._parse_int(r.get(qcol)) if qcol else None
+            dt = self._parse_date(r.get(dcol)) if dcol else None
+            out.append({"fiscalYear": fy, "fiscalQuarter": fq, "periodEnd": dt})
+        return out
 
     def load_transcript(self, dataset: str, symbol: str, year: Optional[int], quarter: Optional[int]):
         path = self._get_dataset_path(dataset)
-        df = self._read(path)
-        tcol = self._find_col(df, TICKER_COLS)
-        if not tcol:
+        rows = self._read_rows(path)
+        if not rows:
             return None
-        df = df[df[tcol].str.upper() == symbol.upper()]
-        ycol = self._find_col(df, YEAR_COLS)
-        qcol = self._find_col(df, QTR_COLS)
-        if year and ycol in df.columns:
-            df = df[df[ycol] == year]
-        if quarter and qcol in df.columns:
-            try:
-                df = df[df[qcol].astype(str).str.replace("Q","", regex=False).astype(int) == int(quarter)]
-            except Exception:
-                df = df
-        if df.empty:
-            return None
-        tfield = self._find_col(df, TRANSCRIPT_COLS)
-        dfield = self._find_col(df, DATE_COLS)
-        row = df.iloc[0]
-        text = str(row[tfield]) if tfield in row and not pd.isna(row[tfield]) else ""
-        date = None
-        if dfield in row and not pd.isna(row[dfield]):
-            try:
-                date = parser.parse(str(row[dfield])).date().isoformat()
-            except Exception:
-                date = None
-        return {"text": text, "date": date}
+        headers = list(rows[0].keys())
+        tcol = self._find_col(headers, TICKER_COLS)
+        ycol = self._find_col(headers, YEAR_COLS)
+        qcol = self._find_col(headers, QTR_COLS)
+        tfield = self._find_col(headers, TRANSCRIPT_COLS)
+        dfield = self._find_col(headers, DATE_COLS)
+        for r in rows:
+            sym = (r.get(tcol) or "").upper() if tcol else ""
+            if sym != symbol.upper():
+                continue
+            fy = self._parse_int(r.get(ycol)) if ycol else None
+            fq = self._parse_int(r.get(qcol)) if qcol else None
+            if year and fy and fy != year:
+                continue
+            if quarter and fq and fq != quarter:
+                continue
+            text = (r.get(tfield) or "") if tfield else ""
+            dt = self._parse_date(r.get(dfield)) if dfield else None
+            return {"text": text, "date": dt}
+        return None
 
     def load_statements(self, symbol: str, year: Optional[int], quarter: Optional[int]):
         fin_dir = os.path.join(self.root, "financial_statements")
         if not os.path.isdir(fin_dir):
             return None
+
         def find_file(kind: str):
             pat = os.path.join(fin_dir, f"{symbol.upper()}_{kind}*.csv")
             matches = glob.glob(pat)
-            if matches:
-                return matches[0]
-            return None
+            return matches[0] if matches else None
+
+        def load_filtered(path: Optional[str]):
+            if not path:
+                return []
+            rows = self._read_rows(path)
+            if not rows:
+                return []
+            headers = list(rows[0].keys())
+            ycol = self._find_col(headers, YEAR_COLS)
+            qcol = self._find_col(headers, QTR_COLS)
+            filtered = []
+            for r in rows:
+                fy = self._parse_int(r.get(ycol)) if ycol else None
+                fq = self._parse_int(r.get(qcol)) if qcol else None
+                if year and fy and fy != year:
+                    continue
+                if quarter and fq and fq != quarter:
+                    continue
+                filtered.append(r)
+            return filtered
+
         income_p = find_file("income")
         bal_p = find_file("balance")
         cf_p = find_file("cashflow")
         if not income_p and not bal_p and not cf_p:
             return None
-
-        def load_filtered(path: Optional[str]):
-            if not path: return []
-            df = self._read(path)
-            ycol = self._find_col(df, YEAR_COLS)
-            qcol = self._find_col(df, QTR_COLS)
-            if year and ycol in df.columns:
-                df = df[df[ycol] == year]
-            if quarter and qcol in df.columns:
-                try:
-                    df = df[df[qcol].astype(str).str.replace("Q","", regex=False).astype(int) == int(quarter)]
-                except Exception:
-                    df = df
-            return df.to_dict(orient="records")
         return {
             "income_df": load_filtered(income_p),
             "balance_df": load_filtered(bal_p),

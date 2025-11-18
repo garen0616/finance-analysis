@@ -1,6 +1,5 @@
 import math
 from datetime import datetime, timedelta
-import pandas as pd
 from fastapi import HTTPException
 from .charts import build_charts
 from .peers import compute_peer_medians
