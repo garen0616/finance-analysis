@@ -1,27 +1,29 @@
 import os
 import logging
 from typing import Dict, Any
-from collections import Counter
-from sklearn.feature_extraction.text import TfidfVectorizer
+from collections import Counter, defaultdict
 import requests
 
 logger = logging.getLogger(__name__)
 
-def _extractive_summary(text: str, sentences=6):
+def _extractive_summary(text: str, sentences: int = 6):
     if not text:
         return {"title": "No transcript", "bullets": []}
-    parts = [p.strip() for p in text.split(".") if p.strip()]
-    # drop very short utterances
+    parts = [p.strip() for p in text.replace("\n", " ").split(".") if p.strip()]
     parts = [p for p in parts if len(p.split()) >= 5]
     if not parts:
         return {"title": "No transcript", "bullets": []}
-    vec = TfidfVectorizer(stop_words="english")
-    X = vec.fit_transform(parts)
-    scores = (X.sum(axis=1) / (X != 0).sum(axis=1)).A.ravel()
+    # simple term frequency scoring (no sklearn)
+    words = " ".join(parts).lower().split()
+    stop = set(["the","and","an","a","of","to","in","for","on","is","are","with","that","this","we","as","at","be","by","it","from"])
+    freq = Counter(w for w in words if w.isalpha() and w not in stop)
+    scores = []
+    for p in parts:
+        score = sum(freq.get(w.lower(),0) for w in p.split())
+        scores.append(score)
     ranked = [p for _, p in sorted(zip(scores, parts), key=lambda t: t[0], reverse=True)]
-    n = min(sentences, len(ranked))
-    chosen = ranked[:n]
-    keywords = [w for w, _ in Counter(" ".join(parts).lower().split()).most_common(8)]
+    chosen = ranked[: min(sentences, len(ranked))]
+    keywords = [w for w, _ in freq.most_common(8)]
     return {"title": "Executive Summary", "bullets": chosen, "keywords": keywords}
 
 def _openai_summary_http(text: str, model: str | None):
@@ -37,10 +39,7 @@ def _openai_summary_http(text: str, model: str | None):
         ],
         "temperature": 0.2,
     }
-    headers = {
-        "Authorization": f"Bearer {key}",
-        "Content-Type": "application/json",
-    }
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     resp = requests.post(url, json=payload, headers=headers, timeout=30)
     resp.raise_for_status()
     content = resp.json()["choices"][0]["message"]["content"]
