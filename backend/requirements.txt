@@ -16,4 +16,3 @@ beautifulsoup4==4.12.3
 lxml==5.2.1
 neo4j==5.18.0
 python-dateutil==2.9.0.post0
-pyarrow==16.1.0
