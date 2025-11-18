@@ -1,6 +1,18 @@
 import os
 import json
 import logging
+import typing
+import inspect
+
+# Python 3.13 compatibility for pydantic v1 ForwardRef._evaluate signature
+if hasattr(typing, "ForwardRef"):
+    _fr_eval = typing.ForwardRef._evaluate
+    sig = inspect.signature(_fr_eval)
+    if "recursive_guard" in sig.parameters:
+        def _patched_forward_eval(self, globalns=None, localns=None, recursive_guard=None):
+            return _fr_eval(self, globalns, localns, recursive_guard)
+        typing.ForwardRef._evaluate = _patched_forward_eval
+
 from fastapi import FastAPI, BackgroundTasks, Depends, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
