@@ -104,7 +104,7 @@ async def process_analysis(req: AnalyzeRequest, aid: str):
       logger.exception("Analysis error")
       set_status(aid, "failed", error=str(exc))
 
-@app.post("/api/analyze")
+@app.post("/api/analyze", response_model=AnalyzeResponse)
 async def analyze(req: AnalyzeRequest, request: Request, dep=Depends(rate_limit_dependency)):
     aid = new_id()
     analysis = run_analysis(req.symbol, req.mode, req.year, req.quarter, SHOCK_THRESHOLD_PCT, client, req.peers, req.source, req.dataset, repo_loader)
@@ -120,6 +120,7 @@ async def analyze(req: AnalyzeRequest, request: Request, dep=Depends(rate_limit_
         tables=analysis["tables"],
         charts=analysis["charts"],
         transcriptHighlights=analysis["highlights"],
+        transcript=analysis.get("transcript"),
         graphEnabled=graph_client.enabled,
     )
     return resp

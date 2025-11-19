@@ -18,6 +18,7 @@ class AnalyzeResponse(BaseModel):
     tables: Dict[str, Any]
     charts: Dict[str, str]
     transcriptHighlights: List[str]
+    transcript: Optional[str] = None
     graphEnabled: bool
 
 class BatchRequest(BaseModel):

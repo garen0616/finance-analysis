@@ -123,12 +123,19 @@ def run_analysis(symbol, mode, year, quarter, shock_threshold, client, peers_ove
     actual_eps = event.get("epsActual") or event.get("eps") or 0
     surprise = _surprise(actual_eps, est)
     if mode == "specific" and year and quarter:
-        transcript = client.get_transcript(symbol, year=year, quarter=quarter)
+        transcript_raw = client.get_transcript(symbol, year=year, quarter=quarter)
     else:
-        transcript = client.get_transcript(symbol, latest=True)
-    transcript_text = transcript.get("content") if isinstance(transcript, dict) else ""
+        transcript_raw = client.get_transcript(symbol, latest=True)
+    if isinstance(transcript_raw, list):
+        transcript_obj = transcript_raw[0] if transcript_raw else {}
+    elif isinstance(transcript_raw, dict):
+        transcript_obj = transcript_raw
+    else:
+        transcript_obj = {}
+    transcript_text = transcript_obj.get("content") or transcript_obj.get("text") or transcript_obj.get("transcript") or ""
+    transcript_date = transcript_obj.get("date") or transcript_obj.get("earningsDate")
     hist = client.get_hist_prices(symbol, (datetime.utcnow() - timedelta(days=500)).strftime("%Y-%m-%d"), datetime.utcnow().strftime("%Y-%m-%d"))
-    events = event_windows(hist, announcement_date, shock_threshold)
+    events = event_windows(hist, announcement_date or transcript_date, shock_threshold)
     peers = compute_peer_medians(client, symbol, peers_override)
     charts = build_charts(income, cashflow, events, announcement_date)
     rag = run_agentic_pipeline(transcript_text or "", {"income": income, "cashflow": cashflow})
@@ -151,7 +158,7 @@ def run_analysis(symbol, mode, year, quarter, shock_threshold, client, peers_ove
     res = {
         "profile": profile,
         "surprise": surprise,
-        "announcement": announcement_date,
+        "announcement": announcement_date or transcript_date,
     }
     return {
         "summary": summary,
