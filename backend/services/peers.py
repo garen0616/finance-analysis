@@ -18,9 +18,13 @@ def compute_peer_medians(client, symbol, peers_override=None):
     if symbol in peers:
         peers.remove(symbol)
     metrics = defaultdict(list)
+    cleaned = []
     for peer in peers[:8]:
+        symbol = peer.get("symbol") if isinstance(peer, dict) else peer
+        if not symbol:
+            continue
         try:
-            inc = client.get_income_q(peer, 4)
+            inc = client.get_income_q(symbol, 4)
         except Exception:
             continue
         if not inc:
@@ -29,5 +33,6 @@ def compute_peer_medians(client, symbol, peers_override=None):
         metrics["revenue"].append(latest.get("revenue") or 0)
         metrics["eps"].append(latest.get("epsdiluted") or 0)
         metrics["grossMargin"].append(((latest.get("grossProfit") or 0) / (latest.get("revenue") or 1)) * 100)
+        cleaned.append(peer)
     medians = {k: median(v) if v else 0 for k, v in metrics.items()}
-    return {"peers": peers, "medians": medians}
+    return {"peers": cleaned or peers, "medians": medians}
