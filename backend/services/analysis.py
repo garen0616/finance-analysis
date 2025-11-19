@@ -5,7 +5,7 @@ from .charts import build_charts
 from .peers import compute_peer_medians
 from .summarizer import summarize_text
 from .rag_integration import run_agentic_pipeline
-from ..utils import safe_div, ensure_days, parse_date
+from utils import safe_div, ensure_days, parse_date
 
 def _margin(numer, denom):
     return safe_div(numer, denom) * 100
