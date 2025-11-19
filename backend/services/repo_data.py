@@ -190,7 +190,9 @@ class RepoDataLoader:
         for name in names:
             low = name.lower()
             if low in keys:
-                return self._parse_number(rec.get(keys[low]))
+                val = self._parse_number(rec.get(keys[low]))
+                if val is not None:
+                    return val
         return None
 
     def _statement_paths(self, symbol: str):
