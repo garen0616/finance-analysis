@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { apiBase, postJSON, pdfUrl } from "../lib/api";
 import Header from "../components/brand/Header";
@@ -32,7 +32,12 @@ type Analysis = {
 type EventWin = { window: string; returnPct: number; shock: boolean };
 
 export default function Page() {
+  const [source, setSource] = useState<"repo" | "fmp">("fmp");
+  const [dataset, setDataset] = useState<string | undefined>(undefined);
   const [symbol, setSymbol] = useState("AAPL");
+  const [mode, setMode] = useState<"latest" | "specific">("latest");
+  const [year, setYear] = useState<number | undefined>(undefined);
+  const [quarter, setQuarter] = useState<number | undefined>(undefined);
   const [activeTab, setActiveTab] = useState("overview");
   const [analysisId, setAnalysisId] = useState<string | undefined>(undefined);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -42,11 +47,17 @@ export default function Page() {
 
   useSWR(`${apiBase}/api/health`, fetcher);
 
-  const runAnalyze = async (mode: "latest" | "specific", year?: number, quarter?: number) => {
+  useEffect(() => {
+    if (source === "repo") {
+      setMode("specific");
+    }
+  }, [source]);
+
+  const runAnalyze = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await postJSON<Analysis>('/api/analyze', { symbol, mode, year, quarter });
+      const res = await postJSON<Analysis>('/api/analyze', { source, dataset, symbol, mode, year, quarter });
       setAnalysis(res);
       setAnalysisId(res.analysisId);
       if (res.graphEnabled) {
@@ -85,7 +96,21 @@ export default function Page() {
       <div className="min-h-screen relative z-10">
         <Header analysisId={analysisId} />
         <StickySummary bullets={analysis?.summary?.bullets || []} />
-        <ControlBar symbol={symbol} setSymbol={setSymbol} onGenerate={runAnalyze} />
+        <ControlBar
+          source={source}
+          setSource={setSource}
+          dataset={dataset}
+          setDataset={setDataset}
+          symbol={symbol}
+          setSymbol={setSymbol}
+          mode={mode}
+          setMode={setMode}
+          year={year}
+          setYear={setYear}
+          quarter={quarter}
+          setQuarter={setQuarter}
+          onGenerate={runAnalyze}
+        />
 
         <div className="mt-6">
           <Tabs
@@ -102,7 +127,7 @@ export default function Page() {
           />
         </div>
 
-        {error && <ErrorState onRetry={() => runAnalyze("latest")} />}
+        {error && <ErrorState onRetry={() => runAnalyze()} />}
 
         {loading && (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 my-4">
