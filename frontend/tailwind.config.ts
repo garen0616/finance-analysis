@@ -2,39 +2,42 @@ import type { Config } from "tailwindcss";
 const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
-    container: { center: true, padding: "1.25rem" },
+    container: { center: true, padding: "1.5rem" },
     extend: {
-      fontFamily: { sans: ["Inter", "system-ui", "-apple-system", "Segoe UI", "sans-serif"] },
+      fontFamily: { sans: ["var(--font-jakarta)", "Inter", "system-ui", "sans-serif"] },
       colors: {
-        surface: {
-          DEFAULT: "#f8fafc",
-          muted: "#f1f5f9",
-          line: "#e6e8ec",
-          glass: "#ffffffb3",
+        night: {
+          900: "#0D1117",
+          800: "#161B22",
+          700: "#1E293B",
+          glass: "rgba(255,255,255,0.08)",
+          border: "rgba(255,255,255,0.125)",
         },
         accent: {
-          start: "#6366f1",
-          end: "#06b6d4",
-          500: "#6366f1",
-          600: "#4f46e5",
-          700: "#4338ca",
+          100: "#C8E7FF",
+          300: "#7DD3FC",
+          500: "#38BDF8",
+          700: "#0EA5E9",
+        },
+        gold: {
+          400: "#FACC15",
+          500: "#EAB308",
         },
       },
       boxShadow: {
-        glass: "0 1px 0 0 rgba(0,0,0,0.04), 0 8px 20px -12px rgba(0,0,0,0.25)",
+        glass: "0 8px 32px rgba(0,0,0,0.35)",
+        glow: "0 0 25px rgba(56,189,248,0.25)",
+      },
+      backgroundImage: {
+        "prime-grid": "radial-gradient(circle at center, rgba(255,255,255,0.08) 0, transparent 60%)",
       },
       keyframes: {
         "grid-move": { "0%": { transform: "translateY(0)" }, "100%": { transform: "translateY(-8px)" } },
-        fade: { "0%": { opacity: "0" }, "100%": { opacity: "1" } },
-        slide: {
-          "0%": { opacity: "0", transform: "translateY(6px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
+        hue: { "0%": { filter: "hue-rotate(0deg)" }, "100%": { filter: "hue-rotate(360deg)" } },
       },
       animation: {
-        "grid-move": "grid-move 14s ease-in-out infinite alternate",
-        fade: "fade 200ms ease-out",
-        slide: "slide 240ms ease-out",
+        "grid-move": "grid-move 22s ease-in-out infinite alternate",
+        hue: "hue 18s linear infinite",
       },
     },
   },

@@ -8,16 +8,16 @@ export default function DatasetSelect({ value, onChange }: { value?: string; onC
   const { data, isLoading } = useSWR(`${apiBase}/api/datasources`, fetcher, { dedupingInterval: 60000 });
   const list = data?.datasets || [];
   return (
-    <div>
-      <label className="text-xs uppercase text-slate-500">Dataset</label>
+    <div className="space-y-2">
+      <label className="text-xs uppercase tracking-[0.3em] text-slate-400">Dataset</label>
       <select
         value={value || ""}
         onChange={(e) => onChange(e.target.value || undefined)}
-        className="w-full mt-1 px-3 py-2 rounded-md border border-[var(--line)] bg-white/80"
+        className="w-full glass-input bg-white/5"
       >
         <option value="">{isLoading ? "Loading..." : "Select dataset"}</option>
         {list.map((d: any) => (
-          <option key={d.name} value={d.name}>{d.name}</option>
+          <option key={d.name} value={d.name} className="bg-night-900">{d.name}</option>
         ))}
       </select>
     </div>

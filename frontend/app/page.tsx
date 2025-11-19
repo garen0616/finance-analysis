@@ -16,6 +16,7 @@ import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { EmptyState } from "../components/brand/EmptyState";
 import { ErrorState } from "../components/brand/ErrorState";
+import { Sidebar } from "../components/brand/Sidebar";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -92,129 +93,130 @@ export default function Page() {
   const eventRows: EventWin[] = analysis?.tables?.eventWindows || [];
 
   return (
-    <div className="animated-grid relative">
-      <div className="min-h-screen relative z-10">
-        <Header analysisId={analysisId} />
-        <StickySummary bullets={analysis?.summary?.bullets || []} />
-        <ControlBar
-          source={source}
-          setSource={setSource}
-          dataset={dataset}
-          setDataset={setDataset}
-          symbol={symbol}
-          setSymbol={setSymbol}
-          mode={mode}
-          setMode={setMode}
-          year={year}
-          setYear={setYear}
-          quarter={quarter}
-          setQuarter={setQuarter}
-          onGenerate={runAnalyze}
-        />
-
-        <div className="mt-6">
-          <Tabs
-            active={activeTab}
-            onChange={setActiveTab}
-            tabs={[
-              { key: "overview", label: "Overview" },
-              { key: "financials", label: "Financials" },
-              { key: "transcript", label: "Transcript" },
-              { key: "peers", label: "Peers" },
-              { key: "graph", label: "Graph" },
-              { key: "data", label: "Data" },
-            ]}
+    <div className="px-4 sm:px-8 py-8">
+      <div className="flex flex-col xl:flex-row gap-8">
+        <Sidebar active={activeTab} onSelect={setActiveTab} />
+        <div className="flex-1 flex flex-col gap-6">
+          <Header analysisId={analysisId} />
+          <StickySummary bullets={analysis?.summary?.bullets || []} />
+          <ControlBar
+            source={source}
+            setSource={setSource}
+            dataset={dataset}
+            setDataset={setDataset}
+            symbol={symbol}
+            setSymbol={setSymbol}
+            mode={mode}
+            setMode={setMode}
+            year={year}
+            setYear={setYear}
+            quarter={quarter}
+            setQuarter={setQuarter}
+            onGenerate={runAnalyze}
           />
-        </div>
 
-        {error && <ErrorState onRetry={() => runAnalyze()} />}
+          <div className="space-y-4">
+            <Tabs
+              active={activeTab}
+              onChange={setActiveTab}
+              tabs={[
+                { key: "overview", label: "Overview" },
+                { key: "financials", label: "Financials" },
+                { key: "transcript", label: "Transcript" },
+                { key: "peers", label: "Peers" },
+                { key: "graph", label: "Graph" },
+                { key: "data", label: "Data" },
+              ]}
+            />
+            {error && <ErrorState onRetry={() => runAnalyze()} />}
+            {loading && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="h-28" />
+                ))}
+              </div>
+            )}
 
-        {loading && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 my-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-28" />
-            ))}
-          </div>
-        )}
+            {!analysis && !loading && <EmptyState />}
 
-        {!analysis && !loading && <EmptyState message="Run an analysis to see results." />}
-
-        {analysis && (
-          <div className="space-y-6 my-4">
-            {activeTab === "overview" && (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {kpiItems.map((k) => (
-                    <KpiCard key={k.label} {...k} />
-                  ))}
-                </div>
-                <Card className="p-4 space-y-3">
-                  <div className="text-sm font-semibold">Event Windows</div>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-slate-500">
-                        <th className="py-2">Window</th>
-                        <th className="py-2">Return</th>
-                        <th className="py-2">Shock</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {eventRows.length ? (
-                        eventRows.map((e, i) => (
-                          <tr key={i} className="border-t border-[var(--line)]">
-                            <td className="py-2">{e.window}</td>
-                            <td className="py-2">{(e.returnPct ?? 0).toFixed(2)}%</td>
-                            <td className="py-2">{e.shock ? "Yes" : "No"}</td>
+            {analysis && (
+              <div className="space-y-6">
+                {activeTab === "overview" && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {kpiItems.map((k) => (
+                        <KpiCard key={k.label} {...k} />
+                      ))}
+                    </div>
+                    <Card className="space-y-3">
+                      <div className="text-sm font-semibold text-white">Event Windows</div>
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-slate-400 uppercase text-xs tracking-wide">
+                            <th className="py-2">Window</th>
+                            <th className="py-2">Return</th>
+                            <th className="py-2">Shock</th>
                           </tr>
-                        ))
+                        </thead>
+                        <tbody>
+                          {eventRows.length ? (
+                            eventRows.map((e, i) => (
+                              <tr key={i} className="border-t border-white/5 text-slate-200">
+                                <td className="py-2">{e.window}</td>
+                                <td className="py-2">{(e.returnPct ?? 0).toFixed(2)}%</td>
+                                <td className="py-2">{e.shock ? "Yes" : "No"}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr><td className="py-2 text-slate-500" colSpan={3}>No data</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </Card>
+                  </>
+                )}
+
+                {activeTab === "financials" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <ChartCard title="Revenue" dataUrl={chartImg("revenueTrendPng")} />
+                    <ChartCard title="EPS" dataUrl={chartImg("epsTrendPng")} />
+                    <ChartCard title="Margins" dataUrl={chartImg("marginTrendPng")} />
+                    <ChartCard title="FCF" dataUrl={chartImg("fcfTrendPng")} />
+                  </div>
+                )}
+
+                {activeTab === "transcript" && (
+                  <Card className="space-y-3">
+                    <div className="text-lg font-semibold text-white">Transcript Highlights</div>
+                    <ul className="list-disc pl-5 space-y-1 text-slate-300">
+                      {analysis.transcriptHighlights?.length ? (
+                        analysis.transcriptHighlights.map((h, i) => <li key={i}>{h}</li>)
                       ) : (
-                        <tr><td className="py-2 text-slate-500" colSpan={3}>No data</td></tr>
+                        <li className="text-slate-500">No transcript highlights.</li>
                       )}
-                    </tbody>
-                  </table>
-                </Card>
-              </>
-            )}
+                    </ul>
+                  </Card>
+                )}
 
-            {activeTab === "financials" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <ChartCard title="Revenue" dataUrl={chartImg("revenueTrendPng")} />
-                <ChartCard title="EPS" dataUrl={chartImg("epsTrendPng")} />
-                <ChartCard title="Margins" dataUrl={chartImg("marginTrendPng")} />
-                <ChartCard title="FCF" dataUrl={chartImg("fcfTrendPng")} />
-              </div>
-            )}
+                {activeTab === "peers" && <PeersPanel peers={analysis.tables?.peers || {}} />}
 
-            {activeTab === "transcript" && (
-              <Card className="space-y-2">
-                <div className="text-lg font-semibold">Transcript</div>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysis.transcriptHighlights?.length ? (
-                    analysis.transcriptHighlights.map((h, i) => <li key={i}>{h}</li>)
-                  ) : (
-                    <li className="text-slate-500">No transcript highlights.</li>
-                  )}
-                </ul>
-              </Card>
-            )}
+                {activeTab === "graph" && <GraphPreview enabled={analysis.graphEnabled} data={graphData} />}
 
-            {activeTab === "peers" && <PeersPanel peers={analysis.tables?.peers || {}} />}
-
-            {activeTab === "graph" && <GraphPreview enabled={analysis.graphEnabled} data={graphData} />}
-
-            {activeTab === "data" && (
-              <div className="space-y-4">
-                <div className="flex gap-2">
-                  <Button onClick={() => analysisId && window.open(pdfUrl(analysisId), "_blank")}>Download PDF</Button>
-                  <Button variant="outline">Download CSV</Button>
-                </div>
-                <DataTable title="Income" rows={analysis.tables?.income || []} />
-                <DataTable title="Balance" rows={analysis.tables?.balance || []} />
-                <DataTable title="Cashflow" rows={analysis.tables?.cashflow || []} />
+                {activeTab === "data" && (
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <Button onClick={() => analysisId && window.open(pdfUrl(analysisId), "_blank")}>Download PDF</Button>
+                      <Button variant="outline">Download CSV</Button>
+                    </div>
+                    <DataTable title="Income" rows={analysis.tables?.income || []} />
+                    <DataTable title="Balance" rows={analysis.tables?.balance || []} />
+                    <DataTable title="Cashflow" rows={analysis.tables?.cashflow || []} />
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

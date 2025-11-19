@@ -3,38 +3,77 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f8fafc;
-  --fg: #0f172a;
-  --line: #e6e8ec;
-  --accent: linear-gradient(90deg, #6366f1, #06b6d4);
+  color-scheme: dark;
 }
 
 body {
-  @apply bg-[var(--bg)] text-[var(--fg)] font-sans antialiased;
+  font-family: var(--font-jakarta), "Inter", system-ui, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.prime-bg {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top left, rgba(14,165,233,0.45), transparent 45%),
+    radial-gradient(circle at 80% 20%, rgba(236,72,153,0.25), transparent 50%),
+    linear-gradient(135deg, #0D1117 0%, #161B22 45%, #1E293B 100%);
+  filter: saturate(120%);
+  z-index: 0;
+}
+
+.prime-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 160px 160px;
+  opacity: 0.4;
+  mask-image: radial-gradient(circle at center, rgba(0,0,0,0.55), transparent 70%);
+  animation: grid-move 30s ease-in-out infinite alternate;
+}
+
+.glass-panel,
+.glass-card {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.125);
+  border-radius: 1.5rem;
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
+
+.glass-card {
+  padding: 1.25rem;
+}
+
+.glass-input {
+  background-color: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 0.875rem;
+  color: #f8fafc;
+  padding: 0.65rem 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-input:focus {
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  outline: none;
+}
+
+.font-tabular { font-variant-numeric: tabular-nums; }
+
+@layer base {
+  ::selection {
+    background-color: rgba(14,165,233,0.35);
+    color: #fff;
+  }
 }
 
 @layer utilities {
-  .glass {
-    @apply backdrop-blur bg-white/70 border border-[var(--line)];
-    box-shadow: 0 1px 0 0 rgba(0,0,0,0.04), 0 8px 20px -12px rgba(0,0,0,0.25);
+  .text-glow {
+    text-shadow: 0 0 18px rgba(56,189,248,0.45);
   }
-  .font-tabular { font-variant-numeric: tabular-nums; }
-
-  .animated-grid { position: relative; isolation: isolate; }
-  .animated-grid::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(to right, rgba(99,102,241,0.12) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(99,102,241,0.12) 1px, transparent 1px);
-    background-size: 120px 120px;
-    mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.4), transparent 65%);
-    opacity: 0.6;
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .animated-grid::before { animation: grid-move 16s ease-in-out infinite alternate; }
-  }
-
-  .gradient-bar { background-image: var(--accent); height: 3px; border-radius: 9999px; }
 }

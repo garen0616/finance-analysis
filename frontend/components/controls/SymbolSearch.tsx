@@ -13,24 +13,24 @@ export default function SymbolSearch({ symbol, setSymbol }: { symbol: string; se
   const list = useMemo(() => data || [], [data]);
   return (
     <div className="relative">
-      <label className="text-xs uppercase text-slate-500">Symbol</label>
+      <label className="text-xs uppercase tracking-[0.3em] text-slate-400">Symbol</label>
       <input
         value={symbol}
         onChange={(e) => { setSymbol(e.target.value.toUpperCase()); setQuery(e.target.value); setOpen(true); }}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
-        className="w-full mt-1 px-3 py-2 rounded-md border border-[var(--line)] bg-white/80"
+        className="w-full mt-2 glass-input placeholder:text-slate-500"
         placeholder="Search or type symbol"
       />
       {open && list.length > 0 && (
-        <div className="absolute mt-1 w-full glass rounded-md max-h-64 overflow-auto z-40">
+        <div className="absolute mt-2 w-full glass-panel rounded-2xl max-h-64 overflow-auto z-40 p-2 space-y-1">
           {list.map((item: any) => (
             <div
               key={item.symbol}
-              className={cn("px-3 py-2 cursor-pointer hover:bg-surface-muted")}
+              className={cn("px-3 py-2 cursor-pointer rounded-xl hover:bg-white/10 transition-colors")}
               onMouseDown={() => { setSymbol(item.symbol); setOpen(false); }}
             >
-              <div className="font-medium">{item.symbol}</div>
-              <div className="text-xs text-slate-500">{item.name}</div>
+              <div className="font-semibold text-white">{item.symbol}</div>
+              <div className="text-xs text-slate-400">{item.name}</div>
             </div>
           ))}
         </div>

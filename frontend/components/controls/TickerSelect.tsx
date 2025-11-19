@@ -8,17 +8,17 @@ export default function TickerSelect({ dataset, value, onChange }: { dataset?: s
   const { data, isLoading } = useSWR(dataset ? `${apiBase}/api/dataset/tickers?dataset=${encodeURIComponent(dataset)}` : null, fetcher);
   const list = data || [];
   return (
-    <div>
-      <label className="text-xs uppercase text-slate-500">Ticker</label>
+    <div className="space-y-2">
+      <label className="text-xs uppercase tracking-[0.3em] text-slate-400">Ticker</label>
       <select
         value={value || ""}
         onChange={(e) => onChange(e.target.value.toUpperCase())}
         disabled={!dataset}
-        className="w-full mt-1 px-3 py-2 rounded-md border border-[var(--line)] bg-white/80 disabled:opacity-60"
+        className="w-full glass-input disabled:opacity-50"
       >
         <option value="">{isLoading ? "Loading..." : "Select"}</option>
         {list.map((t: any) => (
-          <option key={t.symbol} value={t.symbol}>{t.symbol} ({t.count})</option>
+          <option key={t.symbol} value={t.symbol} className="bg-night-900 text-slate-200">{t.symbol} ({t.count})</option>
         ))}
       </select>
     </div>

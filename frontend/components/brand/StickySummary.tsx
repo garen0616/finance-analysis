@@ -4,11 +4,11 @@ import { Badge } from "../ui/badge";
 export default function StickySummary({ bullets }: { bullets: string[] }) {
   if (!bullets?.length) return null;
   return (
-    <div className="sticky top-0 z-50 glass rounded-md p-4 border-b-2 border-gradient-to-r from-accent-500 to-accent-end shadow-md backdrop-blur">
-      <div className="text-xs uppercase tracking-wide text-slate-500 mb-2">Executive Summary</div>
+    <div className="glass-panel rounded-3xl p-5 sticky top-6 z-30 border border-white/15 shadow-glow">
+      <div className="text-xs uppercase tracking-[0.4em] text-slate-400 mb-3">Executive Summary</div>
       <div className="flex flex-wrap gap-2">
         {bullets.slice(0, 6).map((b, i) => (
-          <Badge key={i} tone="neutral">{b}</Badge>
+          <Badge key={i}>{b}</Badge>
         ))}
       </div>
     </div>

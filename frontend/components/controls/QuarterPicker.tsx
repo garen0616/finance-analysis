@@ -18,37 +18,40 @@ export default function QuarterPicker({
 }) {
   const options = ["latest", "specific"] as const;
   return (
-    <div className="space-y-2">
-      <div className="text-xs uppercase text-slate-500">Mode</div>
-      <div className="inline-flex rounded-md border border-[var(--line)] overflow-hidden">
+    <div className="space-y-3">
+      <div className="text-xs uppercase tracking-[0.3em] text-slate-400">Mode</div>
+      <div className="inline-flex rounded-2xl border border-white/15 overflow-hidden bg-white/5">
         {options.map((opt) => (
           <button
             key={opt}
             type="button"
             onClick={() => setMode(opt)}
-            className={cn("px-3 py-2 text-sm", mode === opt ? "bg-surface-muted font-medium" : "bg-white/70")}
+            className={cn(
+              "px-4 py-2 text-sm font-semibold transition-all",
+              mode === opt ? "bg-white/15 text-white" : "text-slate-400 hover:text-white"
+            )}
           >
             {opt === "latest" ? "Latest" : "Specific"}
           </button>
         ))}
       </div>
       {mode === "specific" && (
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <input
             type="number"
             placeholder="Year"
             value={year ?? ""}
             onChange={(e) => setYear(e.target.value ? Number(e.target.value) : undefined)}
-            className="w-24 px-3 py-2 rounded-md border border-[var(--line)]"
+            className="glass-input flex-1"
           />
           <select
             value={quarter ?? ""}
             onChange={(e) => setQuarter(e.target.value ? Number(e.target.value) : undefined)}
-            className="px-3 py-2 rounded-md border border-[var(--line)]"
+            className="glass-input flex-1"
           >
             <option value="">Quarter</option>
             {[1, 2, 3, 4].map((q) => (
-              <option key={q} value={q}>{`Q${q}`}</option>
+              <option key={q} value={q} className="bg-slate-900">{`Q${q}`}</option>
             ))}
           </select>
         </div>

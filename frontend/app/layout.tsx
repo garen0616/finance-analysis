@@ -1,8 +1,12 @@
 import "./globals.css";
 import type { ReactNode } from "react";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 
-const inter = Inter({ subsets: ["latin"], display: "swap" });
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-jakarta",
+});
 
 export const metadata = {
   title: "Finance Analytics",
@@ -12,9 +16,11 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-[var(--bg)] text-[var(--fg)]`}>
-        <div className="gradient-bar" />
-        {children}
+      <body className={`${jakarta.variable} bg-night-900 text-slate-200 min-h-screen`}>
+        <div className="prime-bg" />
+        <div className="relative z-10">
+          {children}
+        </div>
       </body>
     </html>
   );

@@ -7,6 +7,7 @@ import DatasetSelect from "../controls/DatasetSelect";
 import TickerSelect from "../controls/TickerSelect";
 import QuarterSelectRepo from "../controls/QuarterSelectRepo";
 import { Button } from "../ui/button";
+import { Sparkles } from "lucide-react";
 
 type Props = {
   source: "repo" | "fmp";
@@ -46,8 +47,18 @@ export default function ControlBar({
   }, [source, setMode]);
 
   return (
-    <div className="glass p-4 rounded-md space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+    <section className="glass-panel p-6 rounded-3xl space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.5em] text-slate-400">Configure</p>
+          <p className="text-lg font-semibold text-white">Blend live market data with curated GitHub transcripts</p>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-slate-300">
+          <Sparkles className="text-[#FFD700]" size={16} />
+          Agentic RAG ready
+        </div>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-end">
         <DataSourceToggle value={source} onChange={(v) => { setSource(v); if (v === "repo") setMode("specific"); }} />
         {source === "repo" ? (
           <>
@@ -57,7 +68,7 @@ export default function ControlBar({
           </>
         ) : (
           <>
-            <div className="md:col-span-2">
+            <div className="lg:col-span-2">
               <SymbolSearch symbol={symbol} setSymbol={setSymbol} />
             </div>
             <QuarterPicker mode={mode} setMode={setMode} year={year} setYear={setYear} quarter={quarter} setQuarter={setQuarter} />
@@ -65,14 +76,10 @@ export default function ControlBar({
         )}
       </div>
       <div className="flex justify-end">
-        <Button
-          onClick={onGenerate}
-          className="bg-black text-white hover:opacity-90"
-          variant="primary"
-        >
-          Generate
+        <Button onClick={onGenerate} className="px-8">
+          Run Analysis
         </Button>
       </div>
-    </div>
+    </section>
   );
 }

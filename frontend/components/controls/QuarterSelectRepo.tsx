@@ -27,8 +27,8 @@ export default function QuarterSelectRepo({
   const value = `${year || ""}-${quarter || ""}`;
 
   return (
-    <div>
-      <label className="text-xs uppercase text-slate-500">Period</label>
+    <div className="space-y-2">
+      <label className="text-xs uppercase tracking-[0.3em] text-slate-400">Period</label>
       <select
         value={value}
         onChange={(e) => {
@@ -36,7 +36,7 @@ export default function QuarterSelectRepo({
           onChange(y, q);
         }}
         disabled={!dataset || !symbol}
-        className="w-full mt-1 px-3 py-2 rounded-md border border-[var(--line)] bg-white/80 disabled:opacity-60"
+        className="w-full glass-input disabled:opacity-50"
       >
         <option value="">{isLoading ? "Loading..." : "Select period"}</option>
         {options.map((p, i) => {
@@ -44,7 +44,7 @@ export default function QuarterSelectRepo({
           const val = `${p.fiscalYear || ""}-${p.fiscalQuarter || ""}`;
           const label = `${p.fiscalYear || "?"} Q${p.fiscalQuarter || "?"}${p.periodEnd ? ` • ${p.periodEnd}` : ""}`;
           return (
-            <option key={key} value={val}>
+            <option key={key} value={val} className="bg-night-900 text-slate-200">
               {label}
             </option>
           );
