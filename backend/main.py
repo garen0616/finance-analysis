@@ -12,10 +12,10 @@ if hasattr(typing, "ForwardRef"):
         try:
             return _fr_eval(self, globalns, localns, type_params, recursive_guard=recursive_guard)
         except TypeError:
-            # Fallback for older signature
-            return _fr_eval(self, globalns, localns, recursive_guard=recursive_guard)
-        except Exception:
-            return _fr_eval(self, globalns, localns, type_params, recursive_guard)
+            try:
+                return _fr_eval(self, globalns, localns, recursive_guard=recursive_guard)
+            except TypeError:
+                return _fr_eval(self, globalns, localns)
     typing.ForwardRef._evaluate = _patched_forward_eval
 
 from fastapi import FastAPI, BackgroundTasks, Depends, Request, HTTPException
