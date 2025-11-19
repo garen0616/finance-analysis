@@ -4,7 +4,8 @@ import os
 from typing import Dict, List, Optional
 from dateutil import parser
 
-DATA_ROOT = os.environ.get("DATA_ROOT", "backend/external/EarningsCallAgenticRag")
+_DEFAULT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "external", "EarningsCallAgenticRag"))
+DATA_ROOT = os.environ.get("DATA_ROOT", _DEFAULT_ROOT)
 
 TRANSCRIPT_FILES = ["maec_transcripts.csv", "merged_data_nasdaq.csv", "merged_data_nyse.csv"]
 TRANSCRIPT_COLS = ["transcript", "text", "content", "call_text"]
@@ -20,7 +21,7 @@ def _lower_map(headers: List[str]) -> Dict[str, str]:
 
 class RepoDataLoader:
     def __init__(self, root: str = DATA_ROOT):
-        self.root = root
+        self.root = os.path.abspath(root)
 
     def _datasets(self) -> List[str]:
         ds = []
