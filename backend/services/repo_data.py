@@ -94,6 +94,16 @@ class RepoDataLoader:
         year = int(year_match.group(1)) if year_match else None
         return (year, quarter)
 
+    def _statement_paths(self, symbol: str):
+        fin_dir = os.path.join(self.root, "financial_statements")
+        if not os.path.isdir(fin_dir):
+            return (None, None, None)
+        def find_file(kind: str):
+            pat = os.path.join(fin_dir, f"{symbol.upper()}_{kind}*.csv")
+            matches = glob.glob(pat)
+            return matches[0] if matches else None
+        return find_file("income"), find_file("balance"), find_file("cashflow")
+
     def list_tickers(self, dataset: str) -> List[Dict]:
         path = self._get_dataset_path(dataset)
         rows = self._read_rows(path)
@@ -109,7 +119,13 @@ class RepoDataLoader:
             if not sym:
                 continue
             counts[sym] = counts.get(sym, 0) + 1
-        return [{"symbol": k, "count": v} for k, v in counts.items()]
+        filtered = []
+        for k, v in counts.items():
+            income_p, bal_p, cf_p = self._statement_paths(k)
+            if not (income_p or bal_p or cf_p):
+                continue
+            filtered.append({"symbol": k, "count": v})
+        return filtered
 
     def list_periods(self, dataset: str, symbol: str) -> List[Dict]:
         path = self._get_dataset_path(dataset)
@@ -171,11 +187,6 @@ class RepoDataLoader:
         if not os.path.isdir(fin_dir):
             return None
 
-        def find_file(kind: str):
-            pat = os.path.join(fin_dir, f"{symbol.upper()}_{kind}*.csv")
-            matches = glob.glob(pat)
-            return matches[0] if matches else None
-
         def load_filtered(path: Optional[str]):
             if not path:
                 return []
@@ -200,9 +211,7 @@ class RepoDataLoader:
                 filtered.append(r)
             return filtered
 
-        income_p = find_file("income")
-        bal_p = find_file("balance")
-        cf_p = find_file("cashflow")
+        income_p, bal_p, cf_p = self._statement_paths(symbol)
         if not income_p and not bal_p and not cf_p:
             return None
         return {
