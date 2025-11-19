@@ -1,6 +1,7 @@
 import csv
 import glob
 import os
+import re
 from typing import Dict, List, Optional
 from dateutil import parser
 
@@ -12,7 +13,7 @@ TRANSCRIPT_COLS = ["transcript", "text", "content", "call_text"]
 DATE_COLS = ["date", "earnings_date", "announce_date", "call_date"]
 TICKER_COLS = ["symbol", "ticker"]
 YEAR_COLS = ["fiscal_year", "fiscalYear", "year"]
-QTR_COLS = ["fiscal_quarter", "fiscalQuarter", "quarter", "fiscalPeriod"]
+QTR_COLS = ["fiscal_quarter", "fiscalQuarter", "quarter", "fiscalPeriod", "q"]
 
 
 def _lower_map(headers: List[str]) -> Dict[str, str]:
@@ -83,6 +84,16 @@ class RepoDataLoader:
         except Exception:
             return None
 
+    def _parse_period(self, value):
+        if not value:
+            return (None, None)
+        s = str(value).strip()
+        match = re.search(r"Q\s*([1-4])", s, re.IGNORECASE)
+        quarter = int(match.group(1)) if match else None
+        year_match = re.search(r"(20\d{2}|19\d{2})", s)
+        year = int(year_match.group(1)) if year_match else None
+        return (year, quarter)
+
     def list_tickers(self, dataset: str) -> List[Dict]:
         path = self._get_dataset_path(dataset)
         rows = self._read_rows(path)
@@ -117,6 +128,10 @@ class RepoDataLoader:
                 continue
             fy = self._parse_int(r.get(ycol)) if ycol else None
             fq = self._parse_int(r.get(qcol)) if qcol else None
+            if (fy is None or fq is None) and qcol:
+                py, pq = self._parse_period(r.get(qcol))
+                fy = fy or py
+                fq = fq or pq
             dt = self._parse_date(r.get(dcol)) if dcol else None
             out.append({"fiscalYear": fy, "fiscalQuarter": fq, "periodEnd": dt})
         return out
@@ -138,6 +153,10 @@ class RepoDataLoader:
                 continue
             fy = self._parse_int(r.get(ycol)) if ycol else None
             fq = self._parse_int(r.get(qcol)) if qcol else None
+            if (fy is None or fq is None) and qcol:
+                py, pq = self._parse_period(r.get(qcol))
+                fy = fy or py
+                fq = fq or pq
             if year and fy and fy != year:
                 continue
             if quarter and fq and fq != quarter:
@@ -170,6 +189,10 @@ class RepoDataLoader:
             for r in rows:
                 fy = self._parse_int(r.get(ycol)) if ycol else None
                 fq = self._parse_int(r.get(qcol)) if qcol else None
+                if (fy is None or fq is None) and qcol:
+                    py, pq = self._parse_period(r.get(qcol))
+                    fy = fy or py
+                    fq = fq or pq
                 if year and fy and fy != year:
                     continue
                 if quarter and fq and fq != quarter:
